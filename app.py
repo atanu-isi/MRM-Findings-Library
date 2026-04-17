@@ -440,6 +440,94 @@ def bulk_findings():
     return jsonify({'added': added, 'skipped': skipped, 'total': len(findings_db)})
 
 
+@app.route('/api/findings/upload', methods=['POST'])
+def upload_findings():
+    """Accept an Excel (.xlsx) or CSV file and bulk-import findings."""
+    import io
+    import pandas as pd
+
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+
+    file = request.files['file']
+    filename = file.filename.lower()
+
+    try:
+        if filename.endswith('.xlsx') or filename.endswith('.xls'):
+            df = pd.read_excel(io.BytesIO(file.read()))
+        elif filename.endswith('.csv'):
+            df = pd.read_csv(io.BytesIO(file.read()))
+        else:
+            return jsonify({'error': 'Unsupported file type. Please upload .xlsx or .csv'}), 400
+    except Exception as e:
+        return jsonify({'error': f'Failed to parse file: {str(e)}'}), 400
+
+    # Normalise column names: strip whitespace, lowercase for matching
+    df.columns = [c.strip() for c in df.columns]
+
+    # Build a flexible column mapping (handle variations in casing/spacing)
+    col_map = {}
+    for col in df.columns:
+        key = col.lower().replace(' ', '_').replace('-', '_')
+        col_map[key] = col
+
+    def resolve(candidates):
+        for c in candidates:
+            if c in col_map:
+                return col_map[c]
+        return None
+
+    finding_id_col        = resolve(['finding_id', 'findingid', 'finding_no', 'id'])
+    model_theme_col       = resolve(['model_theme', 'modeltheme', 'theme'])
+    title_col             = resolve(['title'])
+    description_col       = resolve(['description', 'desc'])
+    business_just_col     = resolve(['business_justification', 'businessjustification',
+                                     'business_justification', 'bj', 'justification'])
+
+    missing = [name for name, col in [
+        ('Finding ID', finding_id_col),
+        ('Title', title_col),
+        ('Description', description_col),
+        ('Business Justification', business_just_col),
+    ] if col is None]
+
+    if missing:
+        return jsonify({
+            'error': f'Required column(s) not found: {", ".join(missing)}. '
+                     f'Expected headers: Finding ID, Model Theme, Title, Description, Business Justification. '
+                     f'Found: {", ".join(df.columns.tolist())}'
+        }), 400
+
+    added, skipped = 0, 0
+    for _, row in df.iterrows():
+        fid   = str(row[finding_id_col]).strip()
+        theme = str(row[model_theme_col]).strip() if model_theme_col and pd.notna(row.get(model_theme_col)) else ''
+        title = str(row[title_col]).strip()
+        desc  = str(row[description_col]).strip()
+        bj    = str(row[business_just_col]).strip()
+
+        if not fid or not title or not desc or not bj or fid.lower() == 'nan':
+            skipped += 1
+            continue
+        if any(f['finding_id'] == fid for f in findings_db):
+            skipped += 1
+            continue
+
+        findings_db.append({
+            'finding_id': fid,
+            'model_theme': theme,
+            'title': title,
+            'description': desc,
+            'business_justification': bj,
+        })
+        added += 1
+
+    if added:
+        run_clustering()
+
+    return jsonify({'added': added, 'skipped': skipped, 'total': len(findings_db)})
+
+
 @app.route('/api/findings/<fid>', methods=['DELETE'])
 def delete_finding(fid):
     global findings_db
