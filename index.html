@@ -483,6 +483,7 @@ code{background:var(--bg);border:1px solid var(--border);border-radius:3px;paddi
       <div class="tab-bar">
         <button class="tab active" id="tab-csv" onclick="switchTab('csv')">CSV / Paste</button>
         <button class="tab" id="tab-json" onclick="switchTab('json')">JSON</button>
+        <button class="tab" id="tab-file" onclick="switchTab('file')">Upload File</button>
         <button class="tab" id="tab-template" onclick="switchTab('template')">Template</button>
       </div>
 
@@ -514,6 +515,49 @@ F014,,Stress Test Deficiencies,Stress testing framework lacks documented scenari
             <button class="btn btn-outline" onclick="document.getElementById('json-input').value=''">Clear</button>
           </div>
           <div id="import-result-json" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <div id="import-file" class="import-tab">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><span class="card-title-bar"></span>Upload Excel or CSV File</div>
+          </div>
+          <p class="note" style="margin-bottom:14px">
+            Upload an <strong>.xlsx</strong> or <strong>.csv</strong> file with the following column headers (order does not matter):
+          </p>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px 14px;margin-bottom:16px;font-family:var(--font-mono);font-size:12px;color:var(--primary)">
+            Finding ID &nbsp;·&nbsp; Model Theme &nbsp;·&nbsp; Title &nbsp;·&nbsp; Description &nbsp;·&nbsp; Business Justification
+          </div>
+          <p class="note" style="margin-bottom:16px"><strong>Model Theme</strong> column is optional. All other columns are required. Rows with duplicate Finding IDs or missing required fields will be skipped.</p>
+
+          <div id="file-drop-zone" style="border:2px dashed var(--border);border-radius:8px;padding:36px 24px;text-align:center;background:var(--bg);transition:border-color .2s,background .2s;cursor:pointer;margin-bottom:16px"
+               ondragover="fileDropOver(event)" ondragleave="fileDropLeave(event)" ondrop="fileDropped(event)" onclick="document.getElementById('file-upload-input').click()">
+            <div style="font-size:28px;margin-bottom:8px;opacity:.4">📂</div>
+            <div style="font-weight:600;font-size:14px;color:var(--text-secondary);margin-bottom:4px">Click to browse or drag &amp; drop</div>
+            <div style="font-size:12px;color:var(--muted)">Supported formats: .xlsx, .xls, .csv</div>
+            <input type="file" id="file-upload-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="fileSelected(this)"/>
+          </div>
+
+          <div id="file-preview" style="display:none;margin-bottom:14px">
+            <div style="display:flex;align-items:center;gap:10px;background:var(--primary-bg);border:1px solid #C5D5F5;border-radius:6px;padding:10px 14px">
+              <span style="font-size:20px">📄</span>
+              <div style="flex:1">
+                <div id="file-name" style="font-weight:600;font-size:13px;color:var(--primary)"></div>
+                <div id="file-size" style="font-size:11px;color:var(--muted)"></div>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="clearFileUpload()">✕ Remove</button>
+            </div>
+          </div>
+
+          <div class="btn-actions">
+            <button class="btn btn-primary" id="btn-upload-file" onclick="uploadFile()" disabled>
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Import File
+            </button>
+            <button class="btn btn-outline" onclick="clearFileUpload()">Clear</button>
+          </div>
+          <div id="import-result-file" style="margin-top:12px"></div>
         </div>
       </div>
 
@@ -581,7 +625,7 @@ const TITLES = {
 const DESCS = {
   dashboard:'Overview & statistics', findings:'Browse and manage all findings',
   clusters:'Auto-generated semantic clusters', search:'Query by natural language',
-  import:'Bulk import via CSV or JSON', add:'Create a new finding record'
+  import:'Bulk import via CSV, JSON or file upload', add:'Create a new finding record'
 };
 function showPanel(name, el) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -879,6 +923,82 @@ async function deleteFinding(fid) {
   await loadAll();
   renderFindings();
   showAlert(`Finding ${fid} deleted`, 'success');
+}
+
+// ── File Upload ──────────────────────────────────────────────────────────
+let selectedFile = null;
+
+function fileDropOver(e) {
+  e.preventDefault();
+  const z = document.getElementById('file-drop-zone');
+  z.style.borderColor = 'var(--primary-light)';
+  z.style.background = 'var(--primary-bg)';
+}
+
+function fileDropLeave(e) {
+  const z = document.getElementById('file-drop-zone');
+  z.style.borderColor = 'var(--border)';
+  z.style.background = 'var(--bg)';
+}
+
+function fileDropped(e) {
+  e.preventDefault();
+  fileDropLeave(e);
+  const file = e.dataTransfer.files[0];
+  if (file) setUploadFile(file);
+}
+
+function fileSelected(input) {
+  if (input.files[0]) setUploadFile(input.files[0]);
+}
+
+function setUploadFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['xlsx', 'xls', 'csv'].includes(ext)) {
+    showAlert('Unsupported file type. Please upload .xlsx, .xls, or .csv', 'error');
+    return;
+  }
+  selectedFile = file;
+  document.getElementById('file-name').textContent = file.name;
+  document.getElementById('file-size').textContent = (file.size / 1024).toFixed(1) + ' KB';
+  document.getElementById('file-preview').style.display = '';
+  document.getElementById('file-drop-zone').style.opacity = '0.5';
+  document.getElementById('btn-upload-file').disabled = false;
+  document.getElementById('import-result-file').innerHTML = '';
+}
+
+function clearFileUpload() {
+  selectedFile = null;
+  document.getElementById('file-upload-input').value = '';
+  document.getElementById('file-preview').style.display = 'none';
+  document.getElementById('file-drop-zone').style.opacity = '1';
+  document.getElementById('btn-upload-file').disabled = true;
+  document.getElementById('import-result-file').innerHTML = '';
+}
+
+async function uploadFile() {
+  if (!selectedFile) return;
+  const btn = document.getElementById('btn-upload-file');
+  btn.disabled = true;
+  btn.textContent = 'Uploading…';
+  const fd = new FormData();
+  fd.append('file', selectedFile);
+  try {
+    const res = await fetch('/api/findings/upload', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.error) {
+      document.getElementById('import-result-file').innerHTML = `<div class="alert alert-error">✗ ${data.error}</div>`;
+    } else {
+      await loadAll();
+      document.getElementById('import-result-file').innerHTML =
+        `<div class="alert alert-success">✓ Added ${data.added} findings (${data.skipped} skipped). Total: ${data.total}</div>`;
+      clearFileUpload();
+    }
+  } catch(e) {
+    document.getElementById('import-result-file').innerHTML = `<div class="alert alert-error">✗ Upload failed: ${e.message}</div>`;
+  }
+  btn.textContent = 'Import File';
+  btn.disabled = false;
 }
 
 // ── Import ────────────────────────────────────────────────────────────────
