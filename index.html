@@ -150,6 +150,7 @@ tr:hover td{background:#FAFBFF}
 .cluster-count{position:absolute;top:14px;right:14px;background:var(--bg);border:1px solid var(--border);color:var(--text-secondary);font-family:var(--font-mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px}
 .cluster-findings{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
 
+.search-hero-input::placeholder{color:rgba(255,255,255,.5)}
 /* ── Search panel ── */
 .search-bar{display:flex;gap:10px;margin-bottom:20px}
 .search-bar input{flex:1;font-size:15px;padding:12px 16px;border-radius:6px}
@@ -512,30 +513,33 @@ code{background:var(--bg);border:1px solid var(--border);border-radius:3px;paddi
 
     <!-- ── Search & Query ── -->
     <div class="panel" id="panel-search">
-      <div class="card" style="margin-bottom:20px">
-        <div class="card-header">
-          <div class="card-title"><span class="card-title-bar"></span>Semantic Query Engine</div>
+      <!-- Hero search bar -->
+      <div style="background:linear-gradient(135deg,#003D52,#005E7C,#0081A6);border-radius:12px;padding:36px 40px 32px;margin-bottom:24px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:-40px;right:-40px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none"></div>
+        <div style="position:absolute;bottom:-60px;left:60px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.03);pointer-events:none"></div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </div>
+          <div>
+            <div style="font-size:20px;font-weight:700;color:#fff;line-height:1.2">Semantic Query Engine</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:2px">TF-IDF cosine similarity · bigram scoring · AI-powered analysis</div>
+          </div>
         </div>
-        <p class="note" style="margin-bottom:16px">Describe an observed issue in natural language. The engine searches across all fields — <strong>Model Theme, Description, Business Justification, Title, and Suggested Remediation</strong> — and maps your input to the most relevant cluster and findings using TF-IDF cosine similarity scoring with bigrams.</p>
-        <div class="search-bar">
-          <input id="search-input" type="text" placeholder="e.g. no monitoring framework, model drift, missing documentation, data quality issues…" onkeydown="if(event.key==='Enter')doSearch()"/>
-          <button class="btn btn-primary" onclick="doSearch()">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <p style="font-size:13px;color:rgba(255,255,255,.75);margin:14px 0 20px;line-height:1.65;max-width:680px">Describe an observed issue in natural language. Searches across <strong style="color:#fff;font-weight:600">Model Theme, Description, Business Justification, Title,</strong> and <strong style="color:#fff;font-weight:600">Suggested Remediation</strong> — then maps to the most relevant cluster and findings.</p>
+        <div style="display:flex;gap:10px;align-items:stretch">
+          <div style="flex:1;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.12);backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.25);border-radius:10px;padding:12px 16px;transition:border-color .2s" onfocusin="this.style.borderColor='rgba(255,255,255,.6)'" onfocusout="this.style.borderColor='rgba(255,255,255,.25)'">
+            <svg width="16" height="16" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input id="search-input" type="text" class="search-hero-input" placeholder="e.g. no monitoring framework, model drift, missing documentation…" onkeydown="if(event.key==='Enter')doSearch()" style="border:none;background:none;outline:none;font-size:14px;color:#fff;width:100%;font-family:var(--font-sans);font-weight:400"/>
+          </div>
+          <button class="btn" onclick="doSearch()" style="background:#fff;color:var(--primary);font-weight:600;font-size:13.5px;padding:0 22px;border-radius:10px;border:none;flex-shrink:0;display:flex;align-items:center;gap:7px;box-shadow:0 4px 14px rgba(0,0,0,.2);transition:all .18s" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(0,0,0,.25)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(0,0,0,.2)'">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             Search
           </button>
-          <button class="btn btn-outline" id="llm-btn" onclick="doLLMAnalysis()" title="Ask AI for a deeper analysis using the matched findings">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><circle cx="19" cy="5" r="3" fill="currentColor" stroke="none"/></svg>
+          <button class="btn" id="llm-btn" onclick="doLLMAnalysis()" title="Ask AI for a deeper analysis using the matched findings" style="background:var(--accent);color:#fff;font-weight:600;font-size:13.5px;padding:0 22px;border-radius:10px;border:none;flex-shrink:0;display:flex;align-items:center;gap:7px;box-shadow:0 4px 14px rgba(234,108,54,.35);transition:all .18s" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(234,108,54,.45)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(234,108,54,.35)'">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><circle cx="19" cy="5" r="3" fill="currentColor" stroke="none"/></svg>
             AI Analyse
           </button>
-        </div>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:8px;font-family:var(--font-mono)">SUGGESTED QUERIES</p>
-        <div class="suggestions">
-          <button class="btn btn-outline btn-sm" onclick="setSearch('data quality missing values upstream systems')">Data quality issues</button>
-          <button class="btn btn-outline btn-sm" onclick="setSearch('documentation transparency limitations rationale')">Documentation gaps</button>
-          <button class="btn btn-outline btn-sm" onclick="setSearch('governance ownership lifecycle review')">Governance weaknesses</button>
-          <button class="btn btn-outline btn-sm" onclick="setSearch('assumptions methodology statistical validation')">Methodology concerns</button>
-          <button class="btn btn-outline btn-sm" onclick="setSearch('version control deployment production implementation')">Implementation controls</button>
-          <button class="btn btn-outline btn-sm" onclick="setSearch('monitoring PSI performance backtesting calibration')">Performance monitoring</button>
         </div>
       </div>
       <!-- ── Search Results (Potential Findings first) ── -->
@@ -1223,17 +1227,13 @@ async function rerunClustering() {
 function setSearch(q) { document.getElementById('search-input').value = q; doSearch(); }
 
 function switchResultTab(tid, pane) {
-  // Toggle tab underline highlights
   const bar = document.getElementById(tid + '-bar');
   if (bar) bar.querySelectorAll('.frc-tab').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.pane === pane);
   });
-  // Show/hide panes
-  ['finding', 'remediation', 'validation', 'regulatory', 'ai'].forEach(p => {
+  ['finding', 'remediation'].forEach(p => {
     const el = document.getElementById(tid + '-' + p);
-    if (el) {
-      el.classList.toggle('active', p === pane);
-    }
+    if (el) el.classList.toggle('active', p === pane);
   });
 }
 
@@ -1249,108 +1249,6 @@ async function doSearch() {
     return;
   }
 
-  const REGULATORY_MAP = {
-    'Model Documentation': [
-      {code:'SR 11-7 §IV', text:'Model documentation must describe the model\'s purpose, design, theory, and limitations.'},
-      {code:'EBA GL 2023/05 §5.3', text:'Technical documentation should cover data inputs, assumptions, and potential limitations.'},
-      {code:'SS1/23 §7.2', text:'PRA expects firms to maintain documentation adequate to support independent review.'},
-    ],
-    'Model Governance': [
-      {code:'SR 11-7 §II', text:'Effective model risk management requires a sound model governance framework.'},
-      {code:'OCC 2011-12 §3', text:'Governance responsibilities must be clearly assigned across model lifecycle stages.'},
-      {code:'EBA GL 2023/05 §6.1', text:'Institutions must establish a model risk management framework including ownership, oversight, and controls.'},
-    ],
-    'Model Methodology': [
-      {code:'SR 11-7 §III-A', text:'Conceptual soundness review must evaluate whether the theory underlying the model is sound.'},
-      {code:'EBA GL 2023/05 §5.1', text:'Validation should assess the theoretical/conceptual framework and methodological choices.'},
-      {code:'BCBS d192 §3.2', text:'Internal model validation should cover the quality of model design and assumptions.'},
-    ],
-    'Model Performance': [
-      {code:'SR 11-7 §III-C', text:'Ongoing monitoring must include backtesting and benchmarking to assess model performance.'},
-      {code:'EBA GL 2023/05 §7.1', text:'Performance monitoring should use outcome analysis and appropriate statistical tests.'},
-      {code:'CRR Art. 185', text:'Institutions shall conduct regular backtesting and benchmarking of internal rating systems.'},
-    ],
-    'Model Implementation': [
-      {code:'SR 11-7 §III-B', text:'Outcomes analysis and ongoing monitoring should verify consistent implementation.'},
-      {code:'EBA GL 2023/05 §5.4', text:'Validation should verify the model is implemented as intended and outputs are correctly used.'},
-      {code:'SS1/23 §7.4', text:'PRA expects adequate controls to ensure production models match approved specifications.'},
-    ],
-    'Modelling Input Data': [
-      {code:'SR 11-7 §III-A', text:'Input data quality is critical — data integrity testing must be part of validation.'},
-      {code:'EBA GL 2023/05 §5.2', text:'Data quality checks should cover completeness, accuracy, representativeness, and timeliness.'},
-      {code:'BCBS d192 §4.1', text:'Banks must ensure data used in internal models is accurate, complete, and appropriate.'},
-    ],
-    'Model Validation': [
-      {code:'SR 11-7 §III', text:'Model validation must be conducted by qualified staff independent of development.'},
-      {code:'EBA GL 2023/05 §4.2', text:'Validation must be independent from model development and carried out on a periodic basis.'},
-      {code:'CRR Art. 185', text:'Institutions shall have a robust system to validate accuracy and consistency of rating systems.'},
-    ],
-  };
-
-  const VALIDATION_MAP = {
-    'Model Documentation': [
-      {title:'Documentation Completeness Review', detail:'Verify that model purpose, assumptions, limitations, and methodology are fully documented and accessible to independent reviewers.'},
-      {title:'Version Control Audit', detail:'Confirm all model versions are tracked with change logs and documented approval records for each iteration.'},
-      {title:'Readability & Self-Sufficiency Test', detail:'Have a reviewer unfamiliar with the model assess whether documentation is sufficient to support an independent validation without oral briefings.'},
-      {title:'Regulatory Alignment Check', detail:'Cross-reference documentation contents against SR 11-7 §IV and EBA GL 2023/05 §5.3 documentation requirements to identify gaps.'},
-    ],
-    'Model Governance': [
-      {title:'Ownership & Role Mapping', detail:'Confirm model owner, developer, validator, and oversight committee responsibilities are clearly assigned, documented, and understood.'},
-      {title:'Governance Committee Coverage', detail:'Verify the model is on the agenda of an appropriate governance committee with evidence of periodic review and challenge.'},
-      {title:'Model Inventory Registration', detail:'Check that the model is registered in the firm\'s model inventory with complete metadata, risk tier, and lifecycle status assigned.'},
-      {title:'Lifecycle Gate Controls', detail:'Test that formal approval gates exist and are enforced for development, validation, deployment, material change, and retirement stages.'},
-    ],
-    'Model Methodology': [
-      {title:'Conceptual Soundness Review', detail:'Assess whether the theoretical basis is appropriate, grounded in peer-reviewed literature, and consistent with industry practice for the intended use case.'},
-      {title:'Assumption Sensitivity Testing', detail:'Identify key model assumptions and test output sensitivity to changes in each — document results and threshold tolerances.'},
-      {title:'Challenger Model Benchmarking', detail:'Compare outputs against at least one challenger or industry-standard benchmark model and document material differences with explanations.'},
-      {title:'Historical Back-testing of Methodology', detail:'Validate that methodological design choices held up against out-of-sample historical data over a sufficient time window.'},
-    ],
-    'Model Performance': [
-      {title:'Backtesting & Calibration Check', detail:'Run backtests against held-out data; compare predicted vs actual outcomes and assess calibration quality using appropriate statistical tests (e.g. Brier score, Hosmer–Lemeshow).'},
-      {title:'Stability Index Analysis (PSI/CSI)', detail:'Calculate Population Stability Index and Characteristic Stability Index to detect distribution drift in inputs and model scores over time.'},
-      {title:'Threshold Sensitivity Analysis', detail:'Test model decision outputs across a range of cut-off thresholds to confirm risk sensitivity is appropriate and stable.'},
-      {title:'Monitoring Controls Verification', detail:'Confirm that automated performance monitoring alerts exist, have defined escalation thresholds, and are reviewed regularly by accountable owners.'},
-    ],
-    'Model Implementation': [
-      {title:'Independent Output Replication', detail:'Reproduce key model outputs independently from source data to verify that the production implementation matches the approved validation specification.'},
-      {title:'Production vs Approved Version Parity', detail:'Compare production model outputs against the approved validation-stage version across a representative sample — document and investigate any discrepancies.'},
-      {title:'IT Change Management Review', detail:'Review change management logs to confirm that all production changes followed a documented, approved change-control process with sign-off trails.'},
-      {title:'End-to-End Data Flow Tracing', detail:'Trace data from each source system through all transformations to the final output to confirm no unintended processing steps, truncations, or rounding errors exist.'},
-    ],
-    'Modelling Input Data': [
-      {title:'Completeness & Missingness Audit', detail:'Quantify missing value rates per field and assess whether imputation, exclusion, or fallback logic introduces material bias into the model inputs.'},
-      {title:'Source Data Lineage Tracing', detail:'Map each input variable back to its origin system and confirm data extraction logic is documented, tested, and subject to version control.'},
-      {title:'Representativeness Assessment', detail:'Compare training/development data distributions against current production population using statistical tests (e.g. KS test, Chi-squared) and document divergences.'},
-      {title:'Data Quality Gate Controls', detail:'Verify that automated DQ checks run before model scoring and that failures trigger documented alerts or fallback logic rather than silent pass-through.'},
-    ],
-    'Model Validation': [
-      {title:'Independence Verification', detail:'Confirm that validation was performed by staff independent from model development, with no direct reporting line to the model owner and no undisclosed conflicts of interest.'},
-      {title:'Scope & Coverage Assessment', detail:'Check that all model components — data, methodology, implementation, outputs, and ongoing monitoring — are explicitly covered within the validation scope statement.'},
-      {title:'Prior Finding Remediation Tracking', detail:'Verify all findings from prior validation cycles have a named owner, agreed target closure date, and documented evidence of remediation.'},
-      {title:'Re-validation Trigger Review', detail:'Assess whether material model changes, performance threshold breaches, or elapsed time since last full review satisfy conditions requiring a full re-validation.'},
-    ],
-  };
-
-  function getRegulatoryRefs(theme) {
-    if (!theme) {
-      return [
-        {code:'SR 11-7', text:'Federal Reserve guidance covering model risk management across all model types.'},
-        {code:'EBA GL 2023/05', text:'EBA guidelines on internal governance including model risk management.'},
-      ];
-    }
-    return REGULATORY_MAP[theme] || REGULATORY_MAP['Model Governance'];
-  }
-
-  function getValidationChecks(theme) {
-    if (!theme) return [
-      {title:'General Model Risk Review', detail:'Perform a holistic review covering documentation, methodology, data quality, implementation, and ongoing monitoring against SR 11-7 standards.'},
-      {title:'Governance & Ownership Check', detail:'Confirm the model is registered in the inventory, has a named owner, and is subject to periodic independent review with documented outcomes.'},
-      {title:'Regulatory Compliance Scan', detail:'Assess the model against applicable SR 11-7, EBA GL 2023/05, and any product-specific regulatory requirements relevant to the model\'s risk tier.'},
-    ];
-    return VALIDATION_MAP[theme] || VALIDATION_MAP['Model Governance'];
-  }
-
   // ── Tab icon SVGs ──────────────────────────────────────────────────────────
   const tabIcons = {
     finding: `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>`,
@@ -1364,8 +1262,6 @@ async function doSearch() {
     const remLines = f.suggested_remediation ? f.suggested_remediation.split('\n').filter(l => l.trim()) : [];
     const remCount = remLines.length;
     const tid = 'sr-tabs-' + idx;
-    const regRefs = getRegulatoryRefs(f.model_theme);
-    const valChecks = getValidationChecks(f.model_theme);
 
     // ── Overview pane (Title + Model Theme + Description + Business Justification — NO remediation) ──
     const findingPaneHTML = `
@@ -1391,27 +1287,42 @@ async function doSearch() {
         </ul>
       </div>` : `<p style="font-size:12.5px;color:var(--muted);padding:8px 0">No remediation steps recorded for this finding.</p>`;
 
-    // ── Validation checks pane ──
+    // ── Validation checks pane — LLM generated on demand ──
     const valPaneHTML = `
-      <div style="display:flex;flex-direction:column;gap:8px">
-        ${valChecks.map((v, vi) => `
-        <div class="val-check-item">
-          <div class="val-check-num">${vi + 1}</div>
-          <div class="val-check-body">
-            <div class="val-check-title">${v.title}</div>
-            <div class="val-check-detail">${v.detail}</div>
+      <div id="${tid}-val-container">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding:14px 16px;border-radius:8px;background:linear-gradient(135deg,#F0F7FF,#F5F9FF);border:1px solid #C0D8F0">
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#0081A6);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 8px rgba(0,94,124,.2)">
+            <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/><path d="M9 12h6M9 16h4"/></svg>
           </div>
-        </div>`).join('')}
+          <div style="flex:1">
+            <div style="font-family:var(--font-mono);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.13em;color:#0A5FA8">AI-Generated · Validation Checks</div>
+            <div style="font-size:12px;color:#4A7DAA;margin-top:2px">Specific validation activities tailored to this finding</div>
+          </div>
+          <button onclick="generateFindingPane('${tid}','val','${(f.finding_id||'').replace(/'/g,"\\'")}',this)" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:7px;border:1.5px solid var(--primary);background:var(--primary);color:#fff;font-size:12px;font-weight:700;cursor:pointer;transition:all .18s;font-family:var(--font-sans);box-shadow:0 2px 6px rgba(0,94,124,.2)" onmouseover="this.style.background='#0081A6'" onmouseout="this.style.background='var(--primary)'">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            Generate
+          </button>
+        </div>
+        <div id="${tid}-val-content"><span style="color:var(--muted);font-size:13px">Click Generate to produce AI-tailored validation checks for this finding…</span></div>
       </div>`;
 
-    // ── Regulatory pane ──
+    // ── Regulatory pane — LLM generated on demand ──
     const regPaneHTML = `
-      <div style="display:flex;flex-direction:column;gap:8px">
-        ${regRefs.map(r => `
-        <div class="reg-ref-item">
-          <span class="reg-ref-code">${r.code}</span>
-          <span class="reg-ref-text">${r.text}</span>
-        </div>`).join('')}
+      <div id="${tid}-reg-container">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding:14px 16px;border-radius:8px;background:linear-gradient(135deg,#EAF3FF,#F5F9FF);border:1px solid #C0D8F0">
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#2B6CB0,#3182CE);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 8px rgba(43,108,176,.2)">
+            <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+          </div>
+          <div style="flex:1">
+            <div style="font-family:var(--font-mono);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.13em;color:#2B6CB0">AI-Generated · Regulatory Guidelines</div>
+            <div style="font-size:12px;color:#4A7DAA;margin-top:2px">Applicable regulations and specific requirements for this finding</div>
+          </div>
+          <button onclick="generateFindingPane('${tid}','reg','${(f.finding_id||'').replace(/'/g,"\\'")}',this)" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:7px;border:1.5px solid #2B6CB0;background:#2B6CB0;color:#fff;font-size:12px;font-weight:700;cursor:pointer;transition:all .18s;font-family:var(--font-sans);box-shadow:0 2px 6px rgba(43,108,176,.2)" onmouseover="this.style.background='#3182CE'" onmouseout="this.style.background='#2B6CB0'">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            Generate
+          </button>
+        </div>
+        <div id="${tid}-reg-content"><span style="color:var(--muted);font-size:13px">Click Generate to produce applicable regulatory guidelines for this finding…</span></div>
       </div>`;
 
     // ── AI Generated pane ──
@@ -1454,17 +1365,11 @@ async function doSearch() {
       </div>
       <div class="frc-body">
         <div class="frc-tabs" id="${tid}-bar">
-          <button class="frc-tab" data-pane="finding" onclick="switchResultTab('${tid}','finding')">${tabIcons.finding} Overview</button>
+          <button class="frc-tab active" data-pane="finding" onclick="switchResultTab('${tid}','finding')">${tabIcons.finding} Overview</button>
           <button class="frc-tab" data-pane="remediation" onclick="switchResultTab('${tid}','remediation')">${tabIcons.remediation} Remediation${remCount ? ` <span style="font-family:var(--font-mono);font-size:9px;background:var(--accent-bg);color:var(--accent);border-radius:10px;padding:1px 5px;margin-left:2px">${remCount}</span>` : ''}</button>
-          <button class="frc-tab" data-pane="validation" onclick="switchResultTab('${tid}','validation')">${tabIcons.validation} Validation Checks <span style="font-family:var(--font-mono);font-size:9px;background:var(--primary-bg);color:var(--primary);border-radius:10px;padding:1px 5px;margin-left:2px">${valChecks.length}</span></button>
-          <button class="frc-tab" data-pane="regulatory" onclick="switchResultTab('${tid}','regulatory')">${tabIcons.regulatory} Regulatory</button>
-          <button class="frc-tab" data-pane="ai" onclick="switchResultTab('${tid}','ai')">${tabIcons.ai} AI Generated <span style="font-family:var(--font-mono);font-size:9px;background:#EEF3FF;color:var(--primary);border-radius:10px;padding:1px 5px;margin-left:2px;border:1px solid #C5D5F5">NEW</span></button>
         </div>
-        <div id="${tid}-finding" class="frc-pane">${findingPaneHTML}</div>
-        <div id="${tid}-ai" class="frc-pane">${aiPaneHTML}</div>
+        <div id="${tid}-finding" class="frc-pane active">${findingPaneHTML}</div>
         <div id="${tid}-remediation" class="frc-pane">${remPaneHTML}</div>
-        <div id="${tid}-validation" class="frc-pane">${valPaneHTML}</div>
-        <div id="${tid}-regulatory" class="frc-pane">${regPaneHTML}</div>
       </div>
     </div>`;
   }).join('');
@@ -1493,56 +1398,67 @@ async function doSearch() {
     </div>` : `<p style="color:var(--muted);font-size:13px;padding:4px 0">No direct cluster match found.</p>`;
 
   zone.innerHTML = `
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-header" style="margin-bottom:14px">
-        <div class="card-title"><span class="card-title-bar"></span>Potential Findings</div>
+    <div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:28px;height:28px;border-radius:7px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="14" height="14" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+          </div>
+          <span style="font-size:15px;font-weight:600;color:var(--text)">Potential Findings</span>
+          <span style="font-family:var(--font-mono);font-size:11px;background:var(--bg);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:2px 9px">${res.findings.length} matched</span>
+        </div>
         ${scoreHTML(res.score)}
       </div>
       <div>${findHTML}</div>
     </div>
-    <div class="card" style="margin-bottom:16px;border:2px solid #4A90D9;background:linear-gradient(135deg,#EAF3FF,#F5F9FF)">
-      <div class="card-header" style="margin-bottom:14px">
-        <div class="card-title" style="font-size:16px;font-weight:700;color:#0A2540"><span class="card-title-bar" style="background:var(--primary);width:4px;height:20px"></span>AI Generated Analysis</div>
-        <span style="font-size:11px;color:#0A5FA8;font-family:var(--font-mono);background:#D4E9FF;border:1px solid #A8CEEE;border-radius:10px;padding:3px 10px;font-weight:700">✦ Powered by Ollama</span>
+
+    <div style="background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--border);background:linear-gradient(to right,#F8FBFF,#fff)">
+        <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--primary),#0081A6);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="15" height="15" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><circle cx="19" cy="5" r="3" fill="currentColor" stroke="none"/></svg>
+        </div>
+        <div style="flex:1">
+          <span style="font-size:14px;font-weight:600;color:var(--text)">AI Generated Analysis</span>
+          <span style="margin-left:10px;font-size:11px;color:var(--primary);font-family:var(--font-mono);background:var(--primary-bg);border:1px solid #C5D5F5;border-radius:10px;padding:2px 8px;font-weight:600">✦ Powered by Ollama</span>
+        </div>
+        <span id="llm-spinner" style="display:none;width:15px;height:15px;border-radius:50%;border:2.5px solid var(--primary);border-top-color:transparent;animation:spin .7s linear infinite;flex-shrink:0"></span>
+        <span id="llm-meta" style="font-size:12px;color:var(--muted)">Click AI Analyse above to generate</span>
       </div>
-      <div id="llm-result-inline" style="margin-top:0">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid #C5D9F0">
-          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#0081A6);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 8px rgba(0,94,124,.3)">
-            <svg width="17" height="17" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      <div style="padding:0 22px">
+        <div style="display:flex;gap:0;border-bottom:1px solid var(--border)" id="llm-tab-bar">
+          <button class="tab active" onclick="switchLLMTab('remediation')" style="padding:12px 18px;font-size:13px;font-weight:500;color:var(--primary);background:none;border:none;border-bottom:2px solid var(--primary);cursor:pointer;white-space:nowrap">Suggested Remediations</button>
+          <button class="tab" onclick="switchLLMTab('regulatory')" style="padding:12px 18px;font-size:13px;font-weight:500;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .15s" onmouseover="if(!this.classList.contains('active'))this.style.color='var(--text)'" onmouseout="if(!this.classList.contains('active'))this.style.color='var(--muted)'">Regulatory Guidelines</button>
+          <button class="tab" onclick="switchLLMTab('validation')" style="padding:12px 18px;font-size:13px;font-weight:500;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .15s" onmouseover="if(!this.classList.contains('active'))this.style.color='var(--text)'" onmouseout="if(!this.classList.contains('active'))this.style.color='var(--muted)'">Validation Checks</button>
+        </div>
+        <div style="padding:18px 0">
+          <div id="llm-pane-remediation" class="llm-pane">
+            <div id="llm-text-remediation" class="llm-section-body"><span style="color:var(--muted);font-size:13px">Click <strong>AI Analyse</strong> above to generate tailored recommendations…</span></div>
           </div>
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:600;color:#0A2540" id="llm-meta">Click AI Analyse to generate</div>
+          <div id="llm-pane-regulatory" class="llm-pane" style="display:none">
+            <div id="llm-text-regulatory" class="llm-section-body"><span style="color:var(--muted);font-size:13px">Click <strong>AI Analyse</strong> above to generate applicable regulatory guidelines…</span></div>
           </div>
-          <span id="llm-spinner" style="display:none;width:16px;height:16px;border-radius:50%;border:2.5px solid var(--primary);border-top-color:transparent;animation:spin .7s linear infinite;flex-shrink:0"></span>
-        </div>
-        <div class="tab-bar" style="margin-bottom:16px" id="llm-tab-bar">
-          <button class="tab active" onclick="openLLMOverlay('remediation')">Suggested Remediations</button>
-          <button class="tab" onclick="openLLMOverlay('regulatory')">Regulatory Guidelines</button>
-          <button class="tab" onclick="openLLMOverlay('validation')">Validation Checks</button>
-        </div>
-        <div id="llm-pane-remediation" class="llm-pane">
-          <div id="llm-text-remediation" class="llm-section-body"><span style="color:var(--muted);font-size:13px">Click AI Analyse to generate…</span></div>
-        </div>
-        <div id="llm-pane-regulatory" class="llm-pane" style="display:none">
-          <div id="llm-text-regulatory" class="llm-section-body"><span style="color:var(--muted);font-size:13px">Click AI Analyse to generate…</span></div>
-        </div>
-        <div id="llm-pane-validation" class="llm-pane" style="display:none">
-          <div id="llm-text-validation" class="llm-section-body"><span style="color:var(--muted);font-size:13px">Click AI Analyse to generate…</span></div>
+          <div id="llm-pane-validation" class="llm-pane" style="display:none">
+            <div id="llm-text-validation" class="llm-section-body"><span style="color:var(--muted);font-size:13px">Click <strong>AI Analyse</strong> above to generate validation checks…</span></div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-header" style="margin-bottom:14px">
-        <div class="card-title"><span class="card-title-bar green"></span>Best Cluster Match</div>
+
+    <div style="background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--border);background:linear-gradient(to right,#F8FBF8,#fff)">
+        <div style="width:28px;height:28px;border-radius:7px;background:var(--success);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="13" height="13" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 3h18v4H3zM3 10h18v4H3zM3 17h12"/></svg>
+        </div>
+        <span style="font-size:14px;font-weight:600;color:var(--text)">Best Cluster Match</span>
       </div>
-      ${clHTML}
+      <div style="padding:16px 20px">${clHTML}</div>
     </div>`;
 }
 
 // ── LLM Analysis ─────────────────────────────────────────────────────────
 let _lastSearchResults = null; // cached from last doSearch call
 
-// Switch between the 3 feature tabs
+// Switch between the 3 LLM feature tabs (inline, no overlay)
 function switchLLMTab(pane) {
   ['remediation', 'regulatory', 'validation'].forEach(p => {
     const el = document.getElementById('llm-pane-' + p);
@@ -1550,99 +1466,14 @@ function switchLLMTab(pane) {
   });
   const bar = document.getElementById('llm-tab-bar');
   if (bar) {
-    const order = ['remediation', 'regulatory', 'validation'];
-    bar.querySelectorAll('.tab').forEach((btn, i) => {
-      btn.classList.toggle('active', order[i] === pane);
+    bar.querySelectorAll('.tab').forEach(btn => {
+      const isActive = btn.getAttribute('onclick').includes("'" + pane + "'");
+      btn.classList.toggle('active', isActive);
+      btn.style.color = isActive ? 'var(--primary)' : 'var(--muted)';
+      btn.style.borderBottom = isActive ? '2px solid var(--primary)' : '2px solid transparent';
+      btn.style.fontWeight = isActive ? '600' : '500';
     });
   }
-}
-
-// ── Open LLM Analysis pane in the shared overlay ─────────────────────────
-const LLM_PANE_LABELS = {
-  remediation: 'Suggested Remediations',
-  regulatory:  'Regulatory Guidelines',
-  validation:  'Validation Checks',
-};
-const LLM_PANE_ICONS = {
-  remediation: `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
-  regulatory:  `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>`,
-  validation:  `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/><path d="M9 12h6M9 16h4"/></svg>`,
-};
-
-function openLLMOverlay(pane) {
-  const overlay = document.getElementById('tab-detail-overlay');
-  const icon    = document.getElementById('tab-detail-icon');
-  const titleEl = document.getElementById('tab-detail-title');
-  const fidEl   = document.getElementById('tab-detail-finding-id');
-  const body    = document.getElementById('tab-detail-body');
-  const tabbar  = document.getElementById('tab-detail-tabbar');
-
-  if (!overlay) return;
-
-  // Header
-  icon.style.background = 'linear-gradient(135deg,var(--primary),#0081A6)';
-  icon.innerHTML = LLM_PANE_ICONS[pane] || LLM_PANE_ICONS.remediation;
-  titleEl.textContent = LLM_PANE_LABELS[pane] || pane;
-  fidEl.innerHTML = '<span style="color:#0A5FA8;font-family:var(--font-mono);background:#D4E9FF;border:1px solid #A8CEEE;border-radius:10px;padding:2px 9px;font-weight:700;font-size:11px">✦ AI Generated Analysis</span>';
-
-  // Tab bar — switch between the 3 LLM panes without closing
-  const panes = ['remediation', 'regulatory', 'validation'];
-  tabbar.innerHTML = panes.map(p => {
-    const isActive = p === pane;
-    return `<button onclick="openLLMOverlay('${p}')"
-      style="display:flex;align-items:center;gap:7px;padding:12px 20px;font-size:14px;font-weight:${isActive?'600':'500'};
-      color:${isActive?'var(--primary)':'var(--muted)'};cursor:pointer;border:none;background:none;
-      border-bottom:3px solid ${isActive?'var(--primary)':'transparent'};white-space:nowrap;transition:all .15s;flex-shrink:0"
-      onmouseover="if(!${isActive})this.style.color='var(--text)'" onmouseout="if(!${isActive})this.style.color='var(--muted)'">
-      ${LLM_PANE_ICONS[p]}<span>${LLM_PANE_LABELS[p]}</span>
-    </button>`;
-  }).join('');
-
-  // Body — clone the content from the inline pane
-  const sourceEl = document.getElementById('llm-text-' + pane);
-  body.innerHTML = '';
-
-  if (!sourceEl) {
-    body.innerHTML = '<p style="color:var(--muted);padding:20px">No content yet. Run an AI Analyse first.</p>';
-  } else {
-    // Wrap content in a structured panel matching Potential Findings style
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'display:flex;flex-direction:column;gap:4px';
-
-    // Section header
-    const header = document.createElement('div');
-    header.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid var(--border)';
-    header.innerHTML = `
-      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#0081A6);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 8px rgba(0,94,124,.3)">
-        ${LLM_PANE_ICONS[pane]}
-      </div>
-      <div>
-        <div style="font-size:16px;font-weight:700;color:#0A2540;line-height:1.2">${LLM_PANE_LABELS[pane]}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px" id="llm-overlay-meta"></div>
-      </div>`;
-    wrapper.appendChild(header);
-
-    // Clone the actual LLM content
-    const contentClone = sourceEl.cloneNode(true);
-    contentClone.id = ''; // avoid id conflict
-    // Upsize fonts for overlay readability
-    contentClone.querySelectorAll('[style*="font-size:14.5px"],[style*="font-size:14px"],[style*="font-size:13px"]').forEach(el => {
-      if (el.tagName !== 'BUTTON') {
-        el.style.fontSize = '15px';
-        el.style.lineHeight = '1.85';
-      }
-    });
-    wrapper.appendChild(contentClone);
-    body.appendChild(wrapper);
-
-    // Sync meta text
-    const metaEl = document.getElementById('llm-meta');
-    const overlayMeta = body.querySelector('#llm-overlay-meta');
-    if (metaEl && overlayMeta) overlayMeta.textContent = metaEl.textContent;
-  }
-
-  overlay.style.display = 'flex';
-  document.getElementById('tab-detail-panel').scrollTop = 0;
 }
 
 // Render plain text from the LLM into styled HTML rows
@@ -1757,8 +1588,71 @@ async function doLLMAnalysis() {
   renderLLMSection('llm-text-regulatory',  regResult.status === 'fulfilled' ? regResult.value : 'Error: ' + regResult.reason?.message);
   renderLLMSection('llm-text-validation',  valResult.status === 'fulfilled' ? valResult.value : 'Error: ' + valResult.reason?.message);
 
-  // Auto-open overlay on the remediation pane after generation
-  openLLMOverlay('remediation');
+  // Auto-switch to remediation tab after generation
+  switchLLMTab('remediation');
+}
+
+// ── Per-finding on-demand LLM pane generation (val / reg) ────────────────
+async function generateFindingPane(tid, pane, findingId, btn) {
+  const f = allFindings.find(x => x.finding_id === findingId);
+  if (!f) return;
+
+  const origText = btn.innerHTML;
+  btn.innerHTML = '<span style="width:10px;height:10px;border-radius:50%;border:2px solid currentColor;border-top-color:transparent;animation:spin .7s linear infinite;display:inline-block"></span> Generating…';
+  btn.disabled = true;
+
+  const context = `Finding: [${f.finding_id}] ${f.title}\nTheme: ${f.model_theme || 'N/A'}\nDescription: ${f.description.substring(0,400)}\nBusiness Justification: ${(f.business_justification||'').substring(0,200)}`;
+  const baseSystem = 'You are a senior Model Risk Management (MRM) expert. Be concise and practical. Respond with ONLY a plain numbered or bulleted list — no intro sentence, no headers, no markdown fences.';
+
+  const prompt = pane === 'val'
+    ? `${context}\n\nList 4-6 specific validation checks that should be performed to assess this MRM finding. Each check must describe a concrete test or review activity.`
+    : `${context}\n\nList 3-5 applicable regulatory guidelines relevant to this finding. For each, cite the specific regulation (e.g. SR 11-7 Section III, EBA GL 2023/05 §5.3, OCC 2011-12, BCBS d192) and briefly state what it requires.`;
+
+  const setContent = (html) => {
+    [`#${tid}-${pane}-content`, `#tab-detail-body #${tid}-${pane}-content`].forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) el.innerHTML = html;
+    });
+  };
+
+  try {
+    const text = await callLLM(baseSystem, prompt);
+    if (!text || !text.trim()) { setContent('<span style="color:var(--muted);font-size:13px">No content returned.</span>'); return; }
+
+    const rows = text.trim().split('\n').map(line => {
+      line = line.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#0A2540;font-weight:700">$1</strong>');
+      if (/^\d+\.\s+/.test(line)) {
+        const num = line.match(/^(\d+)\.\s+/)[1];
+        const body = line.replace(/^\d+\.\s+/, '');
+        const accent = pane === 'reg' ? '#2B6CB0' : 'var(--primary)';
+        const bg = pane === 'reg' ? 'linear-gradient(to right,#EAF3FF,#fff)' : 'linear-gradient(to right,#F0F7FF,#fff)';
+        const border = pane === 'reg' ? '#C0D8F0' : '#D0E4F5';
+        return `<div style="display:flex;gap:12px;padding:10px 14px;margin-bottom:6px;background:${bg};border:1px solid ${border};border-left:3px solid ${accent};border-radius:0 8px 8px 0">
+          <span style="font-family:var(--font-mono);font-size:11px;font-weight:800;color:#fff;background:${accent};border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">${num}</span>
+          <span style="font-size:14px;color:#1A2F4A;line-height:1.75;font-weight:450">${body}</span>
+        </div>`;
+      }
+      if (/^[-•*]\s+/.test(line)) {
+        const body = line.replace(/^[-•*]\s+/, '');
+        const accent = pane === 'reg' ? '#2B6CB0' : 'var(--primary)';
+        const bg = pane === 'reg' ? 'linear-gradient(to right,#EAF3FF,#fff)' : 'linear-gradient(to right,#F0F7FF,#fff)';
+        const border = pane === 'reg' ? '#C0D8F0' : '#D0E4F5';
+        return `<div style="display:flex;gap:12px;padding:10px 14px;margin-bottom:6px;background:${bg};border:1px solid ${border};border-left:3px solid ${accent};border-radius:0 8px 8px 0">
+          <span style="color:${accent};font-weight:800;flex-shrink:0;font-size:16px;line-height:1.4">→</span>
+          <span style="font-size:14px;color:#1A2F4A;line-height:1.75;font-weight:450">${body}</span>
+        </div>`;
+      }
+      if (!line.trim()) return '<div style="height:6px"></div>';
+      return `<p style="font-size:13.5px;color:#1A2F4A;line-height:1.7;padding:4px 0">${line}</p>`;
+    });
+    setContent(`<div style="display:flex;flex-direction:column;gap:2px">${rows.join('')}</div>`);
+    btn.innerHTML = '<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Regenerate';
+    btn.disabled = false;
+  } catch(e) {
+    setContent(`<span style="color:var(--accent);font-size:12px">Error: ${e.message}</span>`);
+    btn.innerHTML = origText;
+    btn.disabled = false;
+  }
 }
 
 // ── Per-finding AI generation ─────────────────────────────────────────────
@@ -2602,46 +2496,6 @@ function openTabOverlay(tid, pane, findingTitle, findingId) {
   const clone = paneEl.cloneNode(true);
   clone.style.display = '';
   clone.classList.add('active');
-  // Increase font sizes in clone for all panes
-  clone.querySelectorAll('.frc-text,.val-check-detail,.reg-ref-text,.frc-biz-just').forEach(el => {
-    el.style.fontSize = '15px';
-    el.style.lineHeight = '1.85';
-    el.style.color = '#1A2F4A';
-  });
-  clone.querySelectorAll('.val-check-title,.frc-section-label').forEach(el => {
-    el.style.fontSize = '13px';
-    el.style.color = '#0A2540';
-    el.style.fontWeight = '600';
-  });
-  clone.querySelectorAll('.remediation-list li').forEach(el => {
-    el.style.fontSize = '15px';
-    el.style.lineHeight = '1.85';
-    el.style.color = '#1A2F4A';
-  });
-  // For AI pane: make sub-tab buttons functional in overlay context
-  if (pane === 'ai') {
-    clone.querySelectorAll('.tab').forEach(btn => {
-      const onclick = btn.getAttribute('onclick');
-      if (onclick) {
-        // Make sub-tab switching work in overlay clone via inline eval
-        btn.setAttribute('onclick', onclick);
-      }
-    });
-    // Improve AI pane item fonts in overlay
-    clone.querySelectorAll('[style*="font-size:13px"],[style*="font-size:12.5px"],[style*="font-size:14px"],[style*="font-size:14.5px"]').forEach(el => {
-      if (el.tagName !== 'BUTTON') {
-        el.style.fontSize = '15px';
-        el.style.lineHeight = '1.8';
-        el.style.color = '#1A2F4A';
-      }
-    });
-    // Increase number circle size
-    clone.querySelectorAll('[style*="border-radius:50%"][style*="background:var(--primary)"]').forEach(el => {
-      el.style.width = '26px';
-      el.style.height = '26px';
-      el.style.fontSize = '12px';
-    });
-  }
   body.appendChild(clone);
 
   overlay.style.display = 'flex';
@@ -2652,27 +2506,7 @@ function switchOverlayTab(tid, pane, findingTitle, findingId) {
   openTabOverlay(tid, pane, findingTitle, findingId);
 }
 
-// ── Override switchResultTab to open overlay instead ─────────────────────
-// Save reference to original if needed
-const _origSwitchResultTab = switchResultTab;
-switchResultTab = function(tid, pane) {
-  // Still update the underlying tab state
-  _origSwitchResultTab(tid, pane);
-
-  // All tabs open in the detail overlay (including Overview/finding)
-  const bar = document.getElementById(tid + '-bar');
-  let findingTitle = '', findingId = '';
-  if (bar) {
-    const card = bar.closest('.finding-result-card');
-    if (card) {
-      const titleEl = card.querySelector('.frc-title');
-      if (titleEl) findingTitle = titleEl.textContent.trim();
-      const idEl = card.querySelector('.tag-id');
-      if (idEl) findingId = idEl.textContent.trim();
-    }
-  }
-  openTabOverlay(tid, pane, findingTitle, findingId);
-};
+// Tabs are inline — no overlay override needed
 </script>
 </body>
 </html>
