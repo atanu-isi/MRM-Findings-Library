@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, send_from_directory, request, jsonify, Response
 import json
 import re
 import math
@@ -14,12 +14,73 @@ try:
 except ImportError:
     _PANDAS_OK = False
 
+import gzip as _gzip
+import functools as _functools
+import os as _os_base
+
 app = Flask(__name__, template_folder='.', static_folder='.', static_url_path='/')
+
+# ── Gzip middleware: compress JSON + HTML responses >= 1 KB ──────────────────
+@app.after_request
+def compress_response(response):
+    # Only compress text-type responses above 1 KB
+    if (response.status_code < 200 or response.status_code >= 300
+            or response.direct_passthrough
+            or 'Content-Encoding' in response.headers):
+        return response
+    ct = response.content_type or ''
+    if not any(t in ct for t in ('json', 'html', 'javascript', 'text')):
+        return response
+    data = response.get_data()
+    if len(data) < 1024:
+        return response
+    accept = request.headers.get('Accept-Encoding', '')
+    if 'gzip' not in accept:
+        return response
+    compressed = _gzip.compress(data, compresslevel=6)
+    response.set_data(compressed)
+    response.headers['Content-Encoding'] = 'gzip'
+    response.headers['Content-Length'] = len(compressed)
+    response.vary.add('Accept-Encoding')
+    return response
 
 # ── Global clustering state ───────────────────────────────────────────────────
 _cluster_lock = threading.Lock()
 _cluster_thread = None
 _clustering_busy = False   # True while a background cluster job is running
+
+# ── Pre-computed TF-IDF cache (rebuilt after every cluster run) ───────────────
+# Stores (doc_vectors, findings_snapshot) so search_query can skip rebuild.
+_tfidf_cache_lock = threading.Lock()
+_tfidf_cache = None   # dict: {vectors, fids} or None
+
+def _invalidate_tfidf_cache():
+    global _tfidf_cache
+    with _tfidf_cache_lock:
+        _tfidf_cache = None
+
+# ── LRU search result cache (keyed on query string) ──────────────────────────
+# Cleared whenever findings_db or clusters_db change.
+_search_cache = {}
+_search_cache_lock = threading.Lock()
+_SEARCH_CACHE_MAX = 128
+
+def _invalidate_search_cache():
+    with _search_cache_lock:
+        _search_cache.clear()
+
+def _search_cache_get(key):
+    with _search_cache_lock:
+        return _search_cache.get(key)
+
+def _search_cache_put(key, value):
+    with _search_cache_lock:
+        if len(_search_cache) >= _SEARCH_CACHE_MAX:
+            # evict oldest half
+            old_keys = list(_search_cache.keys())[:_SEARCH_CACHE_MAX // 2]
+            for k in old_keys:
+                del _search_cache[k]
+        _search_cache[key] = value
 
 
 # ── Flask error handlers – always return JSON, never HTML ────────────────────
@@ -742,8 +803,34 @@ def _do_clustering(k: int = None):
 
         with _cluster_lock:
             clusters_db[:] = new_clusters
+
+        # Pre-warm TF-IDF vector cache for fast subsequent searches
+        _prewarm_tfidf_cache()
+        # Invalidate stale search results
+        _invalidate_search_cache()
     finally:
         _clustering_busy = False
+
+
+def _prewarm_tfidf_cache():
+    """
+    Build and cache TF-IDF document vectors immediately after clustering
+    so the first search request is instant (no rebuild cost).
+    """
+    global _tfidf_cache
+    if not findings_db:
+        return
+    token_counts = [weighted_token_counts(f) for f in findings_db]
+    vectors, vocab, word2idx = build_tfidf(token_counts)
+    snapshot = [f['finding_id'] for f in findings_db]
+    with _tfidf_cache_lock:
+        _tfidf_cache = {
+            'vectors': vectors,
+            'vocab': vocab,
+            'word2idx': word2idx,
+            'token_counts': token_counts,
+            'fid_snapshot': snapshot,
+        }
 
 
 def run_clustering(k: int = None, background: bool = True):
@@ -765,10 +852,12 @@ def search_query(query: str) -> dict:
     if not clusters_db or not findings_db:
         return {'cluster': None, 'findings': [], 'score': 0}
 
-    # Vectorise findings + query together so IDF is computed over the same corpus.
-    # Use tokenize_with_bigrams so the query benefits from the same bigram
-    # representation used by documents — covers all five fields including
-    # Model Theme, Description, Business Justification, Title, Suggested Remediation.
+    # ── Check LRU search cache first ─────────────────────────────────────────
+    cached = _search_cache_get(query)
+    if cached is not None:
+        return cached
+
+    # ── Tokenise the query ───────────────────────────────────────────────────
     raw_query_tokens = tokenize_with_bigrams(query)
     query_tc = {tok: 1.0 for tok in raw_query_tokens}
 
@@ -778,10 +867,41 @@ def search_query(query: str) -> dict:
             for tok in tokenize_with_bigrams(theme_key + ' ' + theme_label):
                 query_tc[tok] = query_tc.get(tok, 0) + 0.5
 
-    all_tcs = [weighted_token_counts(f) for f in findings_db] + [query_tc]
-    vectors, _, _ = build_tfidf(all_tcs)
-    q_vec = vectors[-1]
-    doc_vecs = vectors[:-1]
+    # ── Use pre-warmed TF-IDF cache when available ───────────────────────────
+    # The cache is keyed on the ordered list of finding IDs — if findings_db has
+    # changed since the last cluster run, fall back to a fresh build.
+    with _tfidf_cache_lock:
+        cache_snap = _tfidf_cache
+
+    current_fids = [f['finding_id'] for f in findings_db]
+    if cache_snap and cache_snap['fid_snapshot'] == current_fids:
+        # Extend the existing vocab with the query document and compute its vector
+        doc_vecs   = cache_snap['vectors']
+        word2idx   = cache_snap['word2idx']
+        token_counts = cache_snap['token_counts']
+        N = len(token_counts)
+        df = defaultdict(int)
+        for tc in token_counts:
+            for t in tc:
+                df[t] += 1
+        # Query vector projected onto the pre-built vocab
+        V = len(word2idx)
+        q_vec = [0.0] * V
+        for t, wcount in query_tc.items():
+            idx = word2idx.get(t)
+            if idx is None:
+                continue
+            tf = 1.0 + math.log(wcount) if wcount > 0 else 0.0
+            idf = math.log((N + 1) / (df.get(t, 0) + 1)) + 1.0
+            q_vec[idx] = tf * idf
+        norm = math.sqrt(sum(x * x for x in q_vec)) or 1.0
+        q_vec = [x / norm for x in q_vec]
+    else:
+        # Fresh build (fallback: findings changed between cluster runs)
+        all_tcs = [weighted_token_counts(f) for f in findings_db] + [query_tc]
+        vectors, _, _ = build_tfidf(all_tcs)
+        q_vec    = vectors[-1]
+        doc_vecs = vectors[:-1]
 
     sims = [(dot(q_vec, dv), i) for i, dv in enumerate(doc_vecs)]
     sims.sort(reverse=True)
@@ -800,7 +920,6 @@ def search_query(query: str) -> dict:
     # Top Related Findings = only findings inside the best matched cluster,
     # sorted by their individual similarity to the query
     if best_cluster:
-        cluster_fid_set = set(best_cluster['findings_included'])
         fid_lookup = {f['finding_id']: f for f in findings_db}
         cluster_findings = [
             (fid_to_sim.get(fid, 0.0), fid_lookup[fid])
@@ -812,17 +931,24 @@ def search_query(query: str) -> dict:
     else:
         top_findings = [findings_db[i] for _, i in sims[:5]]
 
-    return {
+    result = {
         'cluster': best_cluster,
         'findings': top_findings,
         'score': round(sims[0][0], 3) if sims else 0,
     }
+    _search_cache_put(query, result)
+    return result
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # Serve index.html as a raw static file — bypasses Jinja2 template
+    # parsing entirely, which avoids TemplateSyntaxError on JS template
+    # literals (${...}, {%...}) embedded in the page.
+    return send_from_directory('.', 'index.html',
+                               max_age=0,
+                               conditional=True)
 
 
 @app.route('/api/findings', methods=['GET'])
@@ -848,6 +974,8 @@ def add_finding():
     else:
         record['suggested_remediation'] = ''
     findings_db.append(record)
+    _invalidate_search_cache()
+    _invalidate_tfidf_cache()
     run_clustering()
     return jsonify({'status': 'ok', 'total': len(findings_db)}), 201
 
@@ -869,6 +997,8 @@ def bulk_findings():
         record['suggested_remediation'] = str(row.get('suggested_remediation', '')).strip() if row.get('suggested_remediation') else ''
         findings_db.append(record)
         added += 1
+    _invalidate_search_cache()
+    _invalidate_tfidf_cache()
     run_clustering()
     return jsonify({'added': added, 'skipped': skipped, 'total': len(findings_db)})
 
@@ -960,6 +1090,8 @@ def upload_findings():
         added += 1
 
     if added:
+        _invalidate_search_cache()
+        _invalidate_tfidf_cache()
         run_clustering()
 
     return jsonify({'added': added, 'skipped': skipped, 'total': len(findings_db)})
@@ -969,6 +1101,8 @@ def upload_findings():
 def delete_finding(fid):
     global findings_db
     findings_db = [f for f in findings_db if f['finding_id'] != fid]
+    _invalidate_search_cache()
+    _invalidate_tfidf_cache()
     run_clustering()
     return jsonify({'status': 'ok'})
 
@@ -999,7 +1133,9 @@ def search():
     if not query:
         return jsonify({'error': 'Empty query'}), 400
     result = search_query(query)
-    return jsonify(result)
+    resp = jsonify(result)
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
 
 
 @app.route('/api/stats', methods=['GET'])
@@ -1008,6 +1144,14 @@ def stats():
         'total_findings': len(findings_db),
         'total_clusters': len(clusters_db),
     })
+
+
+@app.route('/api/stats/count', methods=['GET'])
+def stats_count():
+    """Ultra-lightweight poll — returns only counts, no serialisation overhead."""
+    resp = jsonify({'f': len(findings_db), 'c': len(clusters_db), 'busy': _clustering_busy})
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
 
 
 
@@ -1077,16 +1221,17 @@ def _try_ollama_chat(host, model, messages, timeout=180):
         body = e.read().decode(errors='replace')
         _log(f'HTTP_ERR {e.code}: {body[:120]}')
         return None, f'Ollama HTTP {e.code}: {body}'
+    except TimeoutError:
+        _log(f'TIMEOUT  {host} after {timeout}s - model may be loading or GPU busy')
+        return None, 'timeout'
     except (ConnectionRefusedError, _socket.gaierror, OSError) as e:
         _log(f'CONN_ERR {host}: {e}')
         return None, f'connection_refused:{e}'
-    except TimeoutError:
-        _log(f'TIMEOUT  {host} after {timeout}s — model may be loading or GPU busy')
-        return None, f'timeout'
     except Exception as e:
         _log(f'ERROR    unexpected: {e}')
         return None, f'unexpected:{e}'
 
+@app.route('/api/ollama-check', methods=['GET'])
 def ollama_check():
     """
     Quick reachability probe — open http://localhost:5000/api/ollama-check
@@ -1260,4 +1405,4 @@ for f in SAMPLE_FINDINGS:
 run_clustering(background=False)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
